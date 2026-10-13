@@ -77,10 +77,22 @@ document.querySelectorAll('.sectors button').forEach(button=>button.addEventList
 document.querySelector('#year').textContent=new Date().getFullYear();
 // Animate every illustration as it enters view; pause motion offscreen.
 const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
-const illustrations=[...document.querySelectorAll('img')];
+const heroVideo=document.querySelector('video.hero-art');
+const illustrations=[...document.querySelectorAll('img'),...document.querySelectorAll('video.hero-art')];
+function syncHeroVideo(shouldPlay){
+  if(!heroVideo)return;
+  if(motionPreference.matches||!shouldPlay){
+    heroVideo.dataset.reduced=motionPreference.matches?'true':'false';
+    heroVideo.pause();
+    return;
+  }
+  heroVideo.play().catch(()=>{});
+}
 if('IntersectionObserver' in window){
- const imageObserver=new IntersectionObserver(entries=>{entries.forEach(({target,isIntersecting})=>{if(isIntersecting){target.classList.add('motion-visible');target.classList.remove('motion-paused')}else if(target.classList.contains('motion-visible')){target.classList.add('motion-paused')}})},{threshold:.15});
+ const imageObserver=new IntersectionObserver(entries=>{entries.forEach(({target,isIntersecting})=>{if(isIntersecting){target.classList.add('motion-visible');target.classList.remove('motion-paused');if(target===heroVideo)syncHeroVideo(true)}else if(target.classList.contains('motion-visible')){target.classList.add('motion-paused');if(target===heroVideo)syncHeroVideo(false)}})},{threshold:.15});
  illustrations.forEach(image=>{image.classList.add('motion-ready');imageObserver.observe(image)});
- const syncMotion=()=>{illustrations.forEach(image=>{if(motionPreference.matches)image.classList.add('motion-visible')})};
+ const syncMotion=()=>{illustrations.forEach(image=>{if(motionPreference.matches)image.classList.add('motion-visible')});syncHeroVideo(!motionPreference.matches)};
  motionPreference.addEventListener('change',syncMotion);syncMotion();
+}else{
+ syncHeroVideo(!motionPreference.matches);
 }
