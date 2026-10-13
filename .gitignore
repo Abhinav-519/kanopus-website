@@ -25,3 +25,6 @@ dist-ssr
 
 # Uploads (source zip; site files live at repo root)
 uploads
+
+.vercel
+dist
