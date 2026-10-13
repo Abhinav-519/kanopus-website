@@ -78,7 +78,7 @@ document.querySelector('#year').textContent=new Date().getFullYear();
 // Animate every illustration as it enters view; pause motion offscreen.
 const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
 const heroVideo=document.querySelector('video.hero-art');
-const illustrations=[...document.querySelectorAll('img')];
+const illustrations=[...document.querySelectorAll('img:not(.brand-logo)')];
 function keepHeroVideoPlaying(){
   if(!heroVideo||motionPreference.matches||document.visibilityState==='hidden')return;
   const playPromise=heroVideo.play();
