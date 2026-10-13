@@ -8,7 +8,7 @@
 @media(prefers-reduced-motion:no-preference){
 img.motion-ready{opacity:0;will-change:transform,opacity}
 img.motion-ready.motion-visible{animation:illustration-enter .8s cubic-bezier(.2,.7,.2,1) both,illustration-float 5s ease-in-out .8s infinite}
-video.hero-art.motion-ready.motion-visible{animation:illustration-enter 1.1s cubic-bezier(.2,.7,.2,1) both;transform-origin:center}
+video.hero-art{opacity:1!important;animation:none!important;will-change:auto}
 .value-grid article:nth-child(even) img.motion-visible{animation:illustration-enter .8s cubic-bezier(.2,.7,.2,1) both,illustration-sway 6s ease-in-out .8s infinite}
 .service-card:nth-child(even) img.motion-visible{animation:illustration-enter .8s cubic-bezier(.2,.7,.2,1) both,illustration-sway 5.5s ease-in-out .8s infinite}
 img.motion-ready.motion-paused{animation-play-state:paused}
