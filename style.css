@@ -14,3 +14,6 @@ img.motion-ready.motion-visible{animation:illustration-enter .8s cubic-bezier(.2
 img.motion-ready.motion-paused{animation-play-state:paused}
 }
 @media(prefers-reduced-motion:reduce){img.motion-ready{opacity:1!important;animation:none!important;filter:none!important;transform:none!important}}
+
+.field-error{font-size:11px;color:#b42318;margin:12px 0 0;line-height:1.4}
+.steps .active{font-weight:600}
