@@ -4,14 +4,39 @@ services.forEach(([title,description,category,img])=>{const button=document.crea
 document.querySelector('#close-modal').onclick=()=>modal.close();modal.addEventListener('click',e=>{if(e.target===modal)modal.close()});document.querySelector('#modal-cta').onclick=()=>modal.close();document.querySelector('#cases').onclick=()=>show('Case studies, coming next.','This storyboard does not include verified client case studies. This space is ready for your real projects, outcomes, and customer stories.','OUR WORK');
 const form=document.querySelector('#audit-form');
 const websiteInput=document.querySelector('#website');
+const detailsStep=document.querySelector('#details');
+const goalsStep=document.querySelector('#goals');
 function normalizeWebsite(){
   const value=websiteInput.value.trim();
-  if(!value||/^[a-z][a-z0-9+.-]*:/i.test(value))return;
-  websiteInput.value=`https://${value}`;
+  if(!value)return;
+  websiteInput.value=/^[a-z][a-z0-9+.-]*:/i.test(value)?value:`https://${value}`;
 }
-function step(two){document.querySelector('#details').hidden=two;document.querySelector('#goals').hidden=!two;document.querySelector('#step-one').classList.toggle('active',!two);document.querySelector('#step-two').classList.toggle('active',two)}
-document.querySelector('#next').onclick=()=>{normalizeWebsite();if([...document.querySelectorAll('#details input')].every(input=>input.reportValidity()))step(true)};
-document.querySelector('#back').onclick=()=>step(false);
+function detailsAreValid(){
+  normalizeWebsite();
+  for(const input of detailsStep.querySelectorAll('input')){
+    if(!input.checkValidity()){
+      input.reportValidity();
+      return false;
+    }
+  }
+  return true;
+}
+function step(two){
+  detailsStep.hidden=two;
+  goalsStep.hidden=!two;
+  document.querySelector('#step-one').classList.toggle('active',!two);
+  document.querySelector('#step-two').classList.toggle('active',two);
+  (two?goalsStep:detailsStep).querySelector('input,select,textarea')?.focus();
+}
+document.querySelector('#next').addEventListener('click',()=>{if(detailsAreValid())step(true)});
+websiteInput.addEventListener('blur',normalizeWebsite);
+document.querySelector('#back').addEventListener('click',()=>step(false));
+detailsStep.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    if(detailsAreValid())step(true);
+  }
+});
 form.onsubmit=e=>{e.preventDefault();const data=new FormData(form);const brief=`KANOPUS ENTITY — GROWTH AUDIT BRIEF\n\nName: ${data.get('name')}\nWork email: ${data.get('email')}\nWebsite: ${data.get('website')}\nPriority: ${data.get('goal')}\nGoals: ${data.get('context')||'Not specified'}\n\nPrepared locally. No details have been submitted.\n`;const url=URL.createObjectURL(new Blob([brief],{type:'text/plain'}));const link=document.createElement('a');link.href=url;link.download='kanopus-growth-audit.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);form.hidden=true;document.querySelector('#success').hidden=false};document.querySelector('#reset').onclick=()=>{form.reset();step(false);form.hidden=false;document.querySelector('#success').hidden=true};document.querySelectorAll('.sectors button').forEach(button=>button.onclick=()=>{document.querySelectorAll('.sectors button').forEach(b=>b.classList.remove('selected'));button.classList.add('selected')});document.querySelector('#year').textContent=new Date().getFullYear();
 // Animate every illustration as it enters view; pause motion offscreen.
 const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
