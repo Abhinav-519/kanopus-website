@@ -8,10 +8,16 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <div class="vfx-root" aria-hidden="true">
+    <canvas id="vfx-particles" class="vfx-particles"></canvas>
+    <div class="vfx-grain"></div>
+    <div class="vfx-spot" id="vfx-spot"></div>
+  </div>
   <header class="site-header" id="site-header">
     <a class="brand" href="#home" aria-label="Kanopus Entity home">
       <span class="brand-mark" data-logo>
         <span class="brand-orbit" aria-hidden="true"></span>
+        <span class="brand-sparks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
         <img class="brand-logo" src="/assets/kanopus-logo.png" alt="Kanopus Entity" width="160" height="147">
         <span class="brand-shine" aria-hidden="true"></span>
       </span>
@@ -34,6 +40,13 @@
         <video id="hero-video" class="hero-video" autoplay muted loop playsinline webkit-playsinline preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
         <div class="hero-overlay"></div>
       </div>
+      <div class="hero-vfx" aria-hidden="true">
+        <span class="hero-beam"></span>
+        <span class="hero-beam hero-beam--2"></span>
+        <span class="hero-orb"></span>
+        <span class="hero-orb hero-orb--2"></span>
+        <span class="hero-ring"></span>
+      </div>
       <div class="hero-content">
         <div class="eyebrow hero-reveal" style="--d:0">INTELLIGENCE. STRATEGY. IMPACT.</div>
         <h1 class="hero-reveal" style="--d:1"><strong>DOMINANCE</strong> through<br><span>INTELLIGENCE.</span></h1>
@@ -52,7 +65,8 @@
       </a>
     </section>
 
-    <section id="values" class="screen values">
+    <section id="values" class="screen values has-vfx">
+      <div class="section-vfx" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="section-top reveal">
         <span class="eyebrow">WHAT WE STAND FOR</span>
         <span class="folio">02 / 04</span>
@@ -107,7 +121,8 @@
       <a class="text-link reveal" href="#services">Explore our capabilities <span class="link-arrow">↓</span></a>
     </section>
 
-    <section id="services" class="screen services">
+    <section id="services" class="screen services has-vfx">
+      <div class="section-vfx" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="section-top reveal">
         <span class="eyebrow">FROM INSIGHT TO ACTION</span>
         <span class="folio">03 / 04</span>
@@ -116,7 +131,8 @@
       <div class="service-grid" id="service-grid"></div>
     </section>
 
-    <section id="audit" class="screen audit">
+    <section id="audit" class="screen audit has-vfx">
+      <div class="section-vfx" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="section-top reveal">
         <span class="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
         <span class="folio">04 / 04</span>
@@ -185,6 +201,7 @@
         <a class="brand" href="#home" aria-label="Kanopus Entity home">
           <span class="brand-mark brand-mark--footer" data-logo>
             <span class="brand-orbit" aria-hidden="true"></span>
+            <span class="brand-sparks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
             <img class="brand-logo" src="/assets/kanopus-logo.png" alt="Kanopus Entity" width="140" height="129">
             <span class="brand-shine" aria-hidden="true"></span>
           </span>

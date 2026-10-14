@@ -507,9 +507,109 @@ motionPreference.addEventListener('change',()=>{
     if(heroMedia){heroMedia.style.transform='';heroMedia.style.filter=''}
     if(heroContent)heroContent.style.transform='';
     document.querySelectorAll('.tilt-3d').forEach(resetTilt);
+    stopVfx();
   }else{
     initTilts();
     initMediaFx();
     startHeroParallax();
+    startVfx();
   }
 });
+
+/* Global VFX: particle field + cursor spotlight */
+const particleCanvas=document.querySelector('#vfx-particles');
+const spot=document.querySelector('#vfx-spot');
+let particleRaf=0;
+let particleCtx=null;
+let particles=[];
+let spotX=window.innerWidth*0.5;
+let spotY=window.innerHeight*0.4;
+let spotTX=spotX;
+let spotTY=spotY;
+
+function resizeParticles(){
+  if(!particleCanvas)return;
+  const dpr=Math.min(window.devicePixelRatio||1,1.5);
+  particleCanvas.width=Math.floor(window.innerWidth*dpr);
+  particleCanvas.height=Math.floor(window.innerHeight*dpr);
+  particleCanvas.style.width=`${window.innerWidth}px`;
+  particleCanvas.style.height=`${window.innerHeight}px`;
+  particleCtx=particleCanvas.getContext('2d');
+  particleCtx.setTransform(dpr,0,0,dpr,0,0);
+  const count=window.innerWidth<760?28:48;
+  particles=Array.from({length:count},()=>({
+    x:Math.random()*window.innerWidth,
+    y:Math.random()*window.innerHeight,
+    r:Math.random()*1.8+0.4,
+    vx:(Math.random()-0.5)*0.35,
+    vy:(Math.random()-0.5)*0.28,
+    a:Math.random()*0.45+0.15
+  }));
+}
+
+function drawParticles(){
+  if(!particleCtx||motionPreference.matches)return;
+  const w=window.innerWidth;
+  const h=window.innerHeight;
+  particleCtx.clearRect(0,0,w,h);
+  for(const p of particles){
+    p.x+=p.vx;
+    p.y+=p.vy;
+    if(p.x<-20)p.x=w+20;
+    if(p.x>w+20)p.x=-20;
+    if(p.y<-20)p.y=h+20;
+    if(p.y>h+20)p.y=-20;
+    particleCtx.beginPath();
+    particleCtx.fillStyle=`rgba(200,150,78,${p.a})`;
+    particleCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    particleCtx.fill();
+  }
+  // constellation links near cursor
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const a=particles[i];
+      const b=particles[j];
+      const dx=a.x-b.x;
+      const dy=a.y-b.y;
+      const dist=Math.hypot(dx,dy);
+      if(dist>120)continue;
+      const midX=(a.x+b.x)/2;
+      const midY=(a.y+b.y)/2;
+      const toSpot=Math.hypot(midX-spotX,midY-spotY);
+      if(toSpot>220)continue;
+      particleCtx.strokeStyle=`rgba(244,241,231,${(1-dist/120)*0.18})`;
+      particleCtx.lineWidth=1;
+      particleCtx.beginPath();
+      particleCtx.moveTo(a.x,a.y);
+      particleCtx.lineTo(b.x,b.y);
+      particleCtx.stroke();
+    }
+  }
+  spotX+=(spotTX-spotX)*0.1;
+  spotY+=(spotTY-spotY)*0.1;
+  if(spot){
+    spot.style.left=`${spotX}px`;
+    spot.style.top=`${spotY}px`;
+  }
+  particleRaf=requestAnimationFrame(drawParticles);
+}
+
+function startVfx(){
+  if(motionPreference.matches||!particleCanvas)return;
+  if(particleRaf)return;
+  resizeParticles();
+  document.body.classList.add('is-spot-on');
+  window.addEventListener('resize',resizeParticles);
+  window.addEventListener('pointermove',e=>{
+    spotTX=e.clientX;
+    spotTY=e.clientY;
+  },{passive:true});
+  drawParticles();
+}
+function stopVfx(){
+  cancelAnimationFrame(particleRaf);
+  particleRaf=0;
+  document.body.classList.remove('is-spot-on');
+  if(particleCtx)particleCtx.clearRect(0,0,window.innerWidth,window.innerHeight);
+}
+startVfx();
