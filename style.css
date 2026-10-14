@@ -51,13 +51,75 @@ img{max-width:100%;height:auto}
   box-shadow:0 10px 30px rgba(20,30,28,.06);
 }
 .brand{display:inline-flex;align-items:center;line-height:0;flex-shrink:0}
+.brand-mark{
+  --lx:0deg;
+  --ly:0deg;
+  --lz:0px;
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:72px;
+  height:72px;
+  perspective:600px;
+  transform-style:preserve-3d;
+}
+.brand-mark--footer{width:64px;height:64px}
+.brand-orbit{
+  position:absolute;
+  inset:-6px;
+  border-radius:50%;
+  border:1px solid rgba(200,150,78,.28);
+  background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.35),transparent 42%), radial-gradient(circle at 70% 75%,rgba(200,150,78,.18),transparent 55%);
+  transform:translateZ(-12px);
+  animation:orbit-spin 10s linear infinite;
+  pointer-events:none;
+}
+.brand-orbit::before,
+.brand-orbit::after{
+  content:"";
+  position:absolute;
+  inset:8px;
+  border-radius:50%;
+  border:1px dashed rgba(23,86,117,.22);
+  animation:orbit-spin 16s linear infinite reverse;
+}
+.brand-orbit::after{
+  inset:16px;
+  border-style:solid;
+  border-color:rgba(200,150,78,.16);
+  animation-duration:7s;
+}
 .brand-logo{
+  position:relative;
+  z-index:1;
   display:block;
   height:58px;
   width:auto;
   object-fit:contain;
-  transition:height .35s var(--ease), transform .35s var(--ease);
+  transform:rotateX(var(--lx)) rotateY(var(--ly)) translateZ(var(--lz));
+  filter:drop-shadow(0 8px 14px rgba(23,86,117,.18));
+  transition:height .35s var(--ease), transform .18s ease-out, filter .35s var(--ease);
+  transform-style:preserve-3d;
 }
+.brand-mark.is-hot .brand-logo{
+  filter:drop-shadow(0 12px 20px rgba(200,150,78,.35)) drop-shadow(0 2px 0 rgba(255,255,255,.35));
+}
+.brand-shine{
+  position:absolute;
+  inset:8% 12%;
+  z-index:2;
+  border-radius:18px;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 48%,transparent 62%);
+  transform:translateX(-130%) rotate(18deg);
+  opacity:0;
+  pointer-events:none;
+  mix-blend-mode:soft-light;
+}
+.brand-mark.is-hot .brand-shine{
+  opacity:1;
+  animation:shine-sweep .9s var(--ease-out) both;
+}
+.site-header.is-scrolled .brand-mark{width:60px;height:60px}
 .site-header.is-scrolled .brand-logo{height:48px}
 footer .brand-logo{height:52px}
 
@@ -319,10 +381,75 @@ h3{font-size:clamp(24px,3vw,28px)}
   border-color:rgba(224,179,106,.35);
   box-shadow:inset 4px 4px 13px rgba(4,47,74,.4), 0 18px 34px rgba(4,30,45,.28);
 }
-.value-grid img{
-  width:105px;height:105px;object-fit:contain;border-radius:6px;flex-shrink:0;
-  transform:translateZ(28px);
+.media-3d{
+  --mx:0deg;
+  --my:0deg;
+  --mz:28px;
+  position:relative;
+  display:inline-grid;
+  place-items:center;
+  flex-shrink:0;
+  width:112px;
+  height:112px;
+  perspective:700px;
   transform-style:preserve-3d;
+  transform:translateZ(20px);
+}
+.media-3d--service{
+  position:absolute;
+  right:10px;
+  bottom:12px;
+  width:92px;
+  height:92px;
+  transform:translateZ(36px);
+}
+.media-3d::before{
+  content:"";
+  position:absolute;
+  inset:18% 12% auto;
+  height:55%;
+  border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.18),transparent 70%);
+  transform:translateZ(-18px) rotateX(70deg) scale(1.05);
+  filter:blur(2px);
+  opacity:.55;
+  pointer-events:none;
+}
+.media-3d img{
+  position:relative;
+  z-index:1;
+  width:105px;
+  height:105px;
+  object-fit:contain;
+  border-radius:6px;
+  transform:rotateX(var(--mx)) rotateY(var(--my)) translateZ(var(--mz));
+  filter:drop-shadow(0 14px 18px rgba(4,30,45,.28));
+  transition:transform .16s ease-out, filter .3s var(--ease);
+  transform-style:preserve-3d;
+}
+.media-3d--service img{
+  width:78px;
+  height:78px;
+  mix-blend-mode:multiply;
+  filter:drop-shadow(0 10px 12px rgba(148,68,36,.2));
+}
+.media-shine{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  border-radius:16px;
+  background:linear-gradient(120deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);
+  transform:translateX(-140%) skewX(-12deg);
+  opacity:0;
+  pointer-events:none;
+  mix-blend-mode:soft-light;
+}
+.media-3d.is-hot img{
+  filter:drop-shadow(0 18px 22px rgba(4,30,45,.34)) saturate(1.08);
+}
+.media-3d.is-hot .media-shine{
+  opacity:1;
+  animation:shine-sweep .85s var(--ease-out) both;
 }
 .value-grid article>div{transform:translateZ(16px)}
 .value-grid article span{color:#8cbdcc;font-size:10px}
@@ -381,16 +508,9 @@ h3{font-size:clamp(24px,3vw,28px)}
   min-height:42px;
   transform:translateZ(14px);
 }
-.service-card img{
-  position:absolute;
-  right:17px;bottom:19px;
-  width:78px;height:78px;
-  object-fit:contain;
-  mix-blend-mode:multiply;
-  transform:translateZ(36px);
-  transition:transform .45s var(--ease);
+.service-card:hover .media-3d--service{
+  --mz:46px;
 }
-.service-card:hover img{transform:translateZ(48px) scale(1.08) rotate(-4deg)}
 .service-card .category{
   display:block;
   margin-top:26px;
@@ -612,6 +732,15 @@ dialog p{font-size:14px;line-height:1.8}
   animation:float-3d 6.5s ease-in-out infinite;
   transform-style:preserve-3d;
 }
+.media-3d.float-3d{
+  animation-name:media-orbit;
+}
+.brand-mark .brand-logo{
+  animation:logo-breathe 5.5s ease-in-out infinite;
+}
+.brand-mark.is-hot .brand-logo{
+  animation:none;
+}
 
 /* Hero entrance */
 @media(prefers-reduced-motion:no-preference){
@@ -659,6 +788,23 @@ dialog p{font-size:14px;line-height:1.8}
   40%{transform:translate3d(0,-10px,18px) rotateX(4deg) rotateY(-5deg)}
   70%{transform:translate3d(0,-4px,10px) rotateX(-2deg) rotateY(4deg)}
 }
+@keyframes media-orbit{
+  0%,100%{transform:translate3d(0,0,20px) rotateX(0deg) rotateY(0deg)}
+  35%{transform:translate3d(0,-12px,34px) rotateX(8deg) rotateY(-10deg)}
+  65%{transform:translate3d(2px,-6px,28px) rotateX(-5deg) rotateY(8deg)}
+}
+@keyframes orbit-spin{
+  to{transform:translateZ(-12px) rotate(360deg)}
+}
+@keyframes shine-sweep{
+  from{transform:translateX(-130%) rotate(18deg);opacity:0}
+  25%{opacity:1}
+  to{transform:translateX(130%) rotate(18deg);opacity:0}
+}
+@keyframes logo-breathe{
+  0%,100%{transform:rotateX(var(--lx,0deg)) rotateY(var(--ly,0deg)) translateZ(var(--lz,0px)) scale(1)}
+  50%{transform:rotateX(var(--lx,0deg)) rotateY(var(--ly,0deg)) translateZ(calc(var(--lz,0px) + 10px)) scale(1.04)}
+}
 
 @media(prefers-reduced-motion:no-preference){
   img.motion-ready{opacity:0;will-change:transform,opacity}
@@ -679,7 +825,8 @@ dialog p{font-size:14px;line-height:1.8}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .reveal,.hero-reveal{opacity:1!important;transform:none!important;animation:none!important}
   img.motion-ready{opacity:1!important;animation:none!important;filter:none!important;transform:none!important}
-  .tilt-3d,.float-3d,.hero-content,.hero-media{transform:none!important;animation:none!important}
+  .tilt-3d,.float-3d,.hero-content,.hero-media,.brand-mark,.brand-logo,.media-3d,.media-3d img,.brand-orbit{transform:none!important;animation:none!important}
+  .brand-orbit,.brand-shine,.media-shine,.media-3d::before{display:none!important}
   .hero-media{background:#0b1c24 center/cover no-repeat url('/videos/hero-poster.jpg')}
   .hero-video{opacity:0!important;visibility:hidden!important}
   .scroll-cue span{animation:none}
@@ -687,7 +834,8 @@ dialog p{font-size:14px;line-height:1.8}
 
 @media(pointer:coarse){
   .tilt-3d{transform:none}
-  .float-3d{animation-duration:8s}
+  .float-3d,.media-3d.float-3d{animation-duration:8s}
+  .brand-orbit{animation-duration:14s}
 }
 
 /* Large desktops */
@@ -753,8 +901,13 @@ dialog p{font-size:14px;line-height:1.8}
 
 @media(max-width:760px){
   .site-header{height:auto;min-height:72px;padding:12px 5%}
+  .brand-mark{width:56px;height:56px}
   .brand-logo{height:46px}
   footer .brand-logo{height:42px}
+  .media-3d{width:92px;height:92px}
+  .media-3d img{width:78px;height:78px}
+  .media-3d--service{width:72px;height:72px}
+  .media-3d--service img{width:60px;height:60px}
   .screen{padding:36px 6% 28px;min-height:auto}
   .hero{min-height:100vh;min-height:100dvh}
   .hero-content{padding:110px 0 56px}

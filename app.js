@@ -27,7 +27,7 @@ services.forEach(([title,description,category,img],index)=>{
   button.className='service-card reveal tilt-3d';
   button.style.setProperty('--i',String(index%3));
   button.type='button';
-  button.innerHTML=`<h3>${title}</h3><span class="arrow">↗</span><p>${description}</p><span class="category">${category}</span><img class="float-3d" src="/assets/${img}.png" alt="" style="animation-delay:${(index%3)*0.35}s">`;
+  button.innerHTML=`<h3>${title}</h3><span class="arrow">↗</span><p>${description}</p><span class="category">${category}</span><span class="media-3d media-3d--service float-3d" data-media style="animation-delay:${(index%3)*0.35}s"><img src="/assets/${img}.png" alt=""><span class="media-shine" aria-hidden="true"></span></span>`;
   button.addEventListener('click',()=>show(
     title,
     `${description} Start with a growth audit to identify where this capability can support your business.`,
@@ -397,6 +397,62 @@ function initTilts(){
 }
 initTilts();
 
+/* Rich 3D FX for logo + pictures */
+function bindLogoFx(mark){
+  if(!finePointer.matches||motionPreference.matches||!mark)return;
+  const logo=mark.querySelector('.brand-logo');
+  mark.addEventListener('pointerenter',()=>mark.classList.add('is-hot'));
+  mark.addEventListener('pointermove',e=>{
+    const rect=mark.getBoundingClientRect();
+    const px=(e.clientX-rect.left)/rect.width-0.5;
+    const py=(e.clientY-rect.top)/rect.height-0.5;
+    mark.style.setProperty('--lx',`${(-py*22).toFixed(2)}deg`);
+    mark.style.setProperty('--ly',`${(px*26).toFixed(2)}deg`);
+    mark.style.setProperty('--lz',`${(18+Math.abs(px)*10).toFixed(1)}px`);
+    if(logo){
+      logo.style.transform=`rotateX(${(-py*22).toFixed(2)}deg) rotateY(${(px*26).toFixed(2)}deg) translateZ(${(18+Math.abs(px)*10).toFixed(1)}px) scale(1.06)`;
+    }
+  });
+  mark.addEventListener('pointerleave',()=>{
+    mark.classList.remove('is-hot');
+    mark.style.setProperty('--lx','0deg');
+    mark.style.setProperty('--ly','0deg');
+    mark.style.setProperty('--lz','0px');
+    if(logo)logo.style.transform='';
+  });
+}
+function bindMediaFx(stage){
+  if(!finePointer.matches||motionPreference.matches||!stage)return;
+  const img=stage.querySelector('img');
+  stage.addEventListener('pointerenter',()=>stage.classList.add('is-hot'));
+  stage.addEventListener('pointermove',e=>{
+    const rect=stage.getBoundingClientRect();
+    const px=(e.clientX-rect.left)/rect.width-0.5;
+    const py=(e.clientY-rect.top)/rect.height-0.5;
+    const rx=(-py*28).toFixed(2);
+    const ry=(px*32).toFixed(2);
+    const z=(34+Math.abs(px)*16).toFixed(1);
+    stage.style.setProperty('--mx',`${rx}deg`);
+    stage.style.setProperty('--my',`${ry}deg`);
+    stage.style.setProperty('--mz',`${z}px`);
+    if(img){
+      img.style.transform=`rotateX(${rx}deg) rotateY(${ry}deg) translateZ(${z}px) scale(1.08)`;
+    }
+  });
+  stage.addEventListener('pointerleave',()=>{
+    stage.classList.remove('is-hot');
+    stage.style.setProperty('--mx','0deg');
+    stage.style.setProperty('--my','0deg');
+    stage.style.setProperty('--mz', stage.classList.contains('media-3d--service')?'36px':'28px');
+    if(img)img.style.transform='';
+  });
+}
+function initMediaFx(){
+  document.querySelectorAll('[data-logo]').forEach(bindLogoFx);
+  document.querySelectorAll('[data-media]').forEach(bindMediaFx);
+}
+initMediaFx();
+
 /* Hero 3D parallax */
 const heroMedia=document.querySelector('.hero-media');
 const heroContent=document.querySelector('.hero-content');
@@ -453,6 +509,7 @@ motionPreference.addEventListener('change',()=>{
     document.querySelectorAll('.tilt-3d').forEach(resetTilt);
   }else{
     initTilts();
+    initMediaFx();
     startHeroParallax();
   }
 });
