@@ -24,10 +24,10 @@ function show(title,text,tag){
 const serviceGrid=document.querySelector('#service-grid');
 services.forEach(([title,description,category,img],index)=>{
   const button=document.createElement('button');
-  button.className='service-card reveal';
+  button.className='service-card reveal tilt-3d';
   button.style.setProperty('--i',String(index%3));
   button.type='button';
-  button.innerHTML=`<h3>${title}</h3><span class="arrow">↗</span><p>${description}</p><span class="category">${category}</span><img src="/assets/${img}.png" alt="">`;
+  button.innerHTML=`<h3>${title}</h3><span class="arrow">↗</span><p>${description}</p><span class="category">${category}</span><img class="float-3d" src="/assets/${img}.png" alt="" style="animation-delay:${(index%3)*0.35}s">`;
   button.addEventListener('click',()=>show(
     title,
     `${description} Start with a growth audit to identify where this capability can support your business.`,
@@ -364,4 +364,95 @@ motionPreference.addEventListener('change',()=>{
   setHeroReduced(false);
   applyHeroSource();
   playHeroVideo();
+});
+
+/* Pointer-driven 3D tilt */
+const finePointer=window.matchMedia('(pointer:fine)');
+function resetTilt(el){
+  el.classList.remove('is-tilting');
+  el.style.setProperty('--tilt-x','0deg');
+  el.style.setProperty('--tilt-y','0deg');
+  el.style.setProperty('--tilt-lift','0px');
+  el.style.setProperty('--tilt-z','0px');
+}
+function bindTilt(el,max=10){
+  if(!finePointer.matches||motionPreference.matches)return;
+  el.addEventListener('pointermove',e=>{
+    const rect=el.getBoundingClientRect();
+    const px=(e.clientX-rect.left)/rect.width-0.5;
+    const py=(e.clientY-rect.top)/rect.height-0.5;
+    el.classList.add('is-tilting');
+    el.style.setProperty('--tilt-x',`${(-py*max).toFixed(2)}deg`);
+    el.style.setProperty('--tilt-y',`${(px*max).toFixed(2)}deg`);
+    el.style.setProperty('--tilt-lift','-6px');
+    el.style.setProperty('--tilt-z','18px');
+  });
+  el.addEventListener('pointerleave',()=>resetTilt(el));
+}
+function initTilts(){
+  document.querySelectorAll('.tilt-3d').forEach(el=>{
+    resetTilt(el);
+    bindTilt(el, el.classList.contains('service-card')?12: el.classList.contains('form-panel')?6:9);
+  });
+}
+initTilts();
+
+/* Hero 3D parallax */
+const heroMedia=document.querySelector('.hero-media');
+const heroContent=document.querySelector('.hero-content');
+let heroParallaxX=0;
+let heroParallaxY=0;
+let heroTargetX=0;
+let heroTargetY=0;
+let heroRaf=0;
+
+function renderHeroParallax(){
+  heroParallaxX+=(heroTargetX-heroParallaxX)*0.08;
+  heroParallaxY+=(heroTargetY-heroParallaxY)*0.08;
+  if(heroMedia){
+    heroMedia.style.transform=`translate3d(${heroParallaxX*18}px,${heroParallaxY*14}px,0) scale(1.06)`;
+  }
+  if(heroContent){
+    heroContent.style.transform=`perspective(1100px) rotateX(${(-heroParallaxY*3).toFixed(2)}deg) rotateY(${(heroParallaxX*3.5).toFixed(2)}deg) translate3d(${(-heroParallaxX*10).toFixed(1)}px,${(-heroParallaxY*8).toFixed(1)}px,0)`;
+  }
+  heroRaf=requestAnimationFrame(renderHeroParallax);
+}
+
+function startHeroParallax(){
+  if(!heroSection||motionPreference.matches||!finePointer.matches)return;
+  if(heroRaf)return;
+  heroSection.addEventListener('pointermove',e=>{
+    const rect=heroSection.getBoundingClientRect();
+    heroTargetX=(e.clientX-rect.left)/rect.width-0.5;
+    heroTargetY=(e.clientY-rect.top)/rect.height-0.5;
+  },{passive:true});
+  heroSection.addEventListener('pointerleave',()=>{
+    heroTargetX=0;
+    heroTargetY=0;
+  });
+  // Subtle scroll depth
+  window.addEventListener('scroll',()=>{
+    if(!heroSection)return;
+    const rect=heroSection.getBoundingClientRect();
+    if(rect.bottom<0||rect.top>window.innerHeight)return;
+    const progress=Math.min(1,Math.max(0,-rect.top/(rect.height||1)));
+    if(heroMedia){
+      heroMedia.style.filter=`brightness(${1-progress*0.12})`;
+    }
+  },{passive:true});
+  renderHeroParallax();
+}
+startHeroParallax();
+
+motionPreference.addEventListener('change',()=>{
+  if(motionPreference.matches){
+    cancelAnimationFrame(heroRaf);
+    heroRaf=0;
+    if(heroMedia){heroMedia.style.transform='';heroMedia.style.filter=''}
+    if(heroContent)heroContent.style.transform='';
+    document.querySelectorAll('.tilt-3d').forEach(resetTilt);
+  }else{
+    initTilts();
+    startHeroParallax();
+  }
 });
