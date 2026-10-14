@@ -1,7 +1,51 @@
-const services=[['Market Intelligence','Understand your audience, competitors, and the opportunities between them.','INSIGHTS','brain'],['Conversion Optimization','Turn the right attention into meaningful customer action.','RESULTS','funnel'],['Performance Marketing','Connect campaign strategy, creative, and measurement.','RESULTS','bulb'],['SEO Entity Mapping','Make your expertise easier to discover and understand.','FINDABILITY','compass'],['Conversion Rate Optimization','Find friction in the customer journey and improve each step.','RESULTS','search'],['Predictive Analytics','Use patterns in your data to inform your next move.','INSIGHTS','growth']];
-const modal=document.querySelector('#modal');function show(title,text,tag){document.querySelector('#modal-title').textContent=title;document.querySelector('#modal-text').textContent=text;document.querySelector('#modal-tag').textContent=tag;modal.showModal()}
-services.forEach(([title,description,category,img])=>{const button=document.createElement('button');button.className='service-card';button.innerHTML=`<h3>${title}</h3><span class="arrow">↗</span><p>${description}</p><span class="category">${category}</span><img src="/assets/${img}.png" alt="">`;button.onclick=()=>show(title,description+' Start with a growth audit to identify where this capability can support your business.',category);document.querySelector('#service-grid').append(button)});
-document.querySelector('#close-modal').onclick=()=>modal.close();modal.addEventListener('click',e=>{if(e.target===modal)modal.close()});document.querySelector('#modal-cta').onclick=()=>modal.close();document.querySelector('#cases').onclick=()=>show('Case studies, coming next.','This storyboard does not include verified client case studies. This space is ready for your real projects, outcomes, and customer stories.','OUR WORK');
+const services=[
+  ['Market Intelligence','Understand your audience, competitors, and the opportunities between them.','INSIGHTS','brain'],
+  ['Conversion Optimization','Turn the right attention into meaningful customer action.','RESULTS','funnel'],
+  ['Performance Marketing','Connect campaign strategy, creative, and measurement.','RESULTS','bulb'],
+  ['SEO Entity Mapping','Make your expertise easier to discover and understand.','FINDABILITY','compass'],
+  ['Conversion Rate Optimization','Find friction in the customer journey and improve each step.','RESULTS','search'],
+  ['Predictive Analytics','Use patterns in your data to inform your next move.','INSIGHTS','growth']
+];
+
+const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
+const mobileHeroQuery=window.matchMedia('(max-width: 768px)');
+const header=document.querySelector('#site-header');
+const navToggle=document.querySelector('#nav-toggle');
+const siteNav=document.querySelector('#site-nav');
+const modal=document.querySelector('#modal');
+
+function show(title,text,tag){
+  document.querySelector('#modal-title').textContent=title;
+  document.querySelector('#modal-text').textContent=text;
+  document.querySelector('#modal-tag').textContent=tag;
+  modal.showModal();
+}
+
+const serviceGrid=document.querySelector('#service-grid');
+services.forEach(([title,description,category,img],index)=>{
+  const button=document.createElement('button');
+  button.className='service-card reveal';
+  button.style.setProperty('--i',String(index%3));
+  button.type='button';
+  button.innerHTML=`<h3>${title}</h3><span class="arrow">↗</span><p>${description}</p><span class="category">${category}</span><img src="/assets/${img}.png" alt="">`;
+  button.addEventListener('click',()=>show(
+    title,
+    `${description} Start with a growth audit to identify where this capability can support your business.`,
+    category
+  ));
+  serviceGrid.append(button);
+});
+
+document.querySelector('#close-modal').addEventListener('click',()=>modal.close());
+modal.addEventListener('click',e=>{if(e.target===modal)modal.close()});
+document.querySelector('#modal-cta').addEventListener('click',()=>modal.close());
+document.querySelector('#cases').addEventListener('click',()=>show(
+  'Case studies, coming next.',
+  'This storyboard does not include verified client case studies. This space is ready for your real projects, outcomes, and customer stories.',
+  'OUR WORK'
+));
+
+/* Audit form */
 const form=document.querySelector('#audit-form');
 const websiteInput=document.querySelector('#website');
 const nameInput=document.querySelector('#name');
@@ -10,6 +54,7 @@ const detailsStep=document.querySelector('#details');
 const goalsStep=document.querySelector('#goals');
 const detailsError=document.querySelector('#details-error');
 const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function normalizeWebsite(){
   const value=websiteInput.value.trim();
   if(!value)return;
@@ -47,9 +92,7 @@ function goToGoals(event){
 document.querySelector('#next').addEventListener('click',goToGoals);
 websiteInput.addEventListener('blur',normalizeWebsite);
 document.querySelector('#back').addEventListener('click',()=>step(false));
-detailsStep.addEventListener('keydown',e=>{
-  if(e.key==='Enter')goToGoals(e);
-});
+detailsStep.addEventListener('keydown',e=>{if(e.key==='Enter')goToGoals(e)});
 form.addEventListener('submit',e=>{
   e.preventDefault();
   const data=new FormData(form);
@@ -70,15 +113,136 @@ document.querySelector('#reset').addEventListener('click',()=>{
   document.querySelector('#success').hidden=true;
   showDetailsError('');
 });
-document.querySelectorAll('.sectors button').forEach(button=>button.addEventListener('click',()=>{
-  document.querySelectorAll('.sectors button').forEach(b=>b.classList.remove('selected'));
-  button.classList.add('selected');
-}));
+document.querySelectorAll('.sectors button').forEach(button=>{
+  button.addEventListener('click',()=>{
+    document.querySelectorAll('.sectors button').forEach(b=>b.classList.remove('selected'));
+    button.classList.add('selected');
+  });
+});
 document.querySelector('#year').textContent=new Date().getFullYear();
-// Full-bleed hero background video (decorative). Never use a poster attribute —
-// browsers keep showing it when autoplay is blocked or delayed.
-const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
-const mobileHeroQuery=window.matchMedia('(max-width: 768px)');
+
+/* Mobile navigation */
+function setNavOpen(open){
+  document.body.classList.toggle('nav-open',open);
+  navToggle?.setAttribute('aria-expanded',open?'true':'false');
+  navToggle?.setAttribute('aria-label',open?'Close menu':'Open menu');
+}
+navToggle?.addEventListener('click',()=>{
+  setNavOpen(!document.body.classList.contains('nav-open'));
+});
+siteNav?.querySelectorAll('[data-nav]').forEach(item=>{
+  item.addEventListener('click',()=>setNavOpen(false));
+});
+header?.addEventListener('click',e=>{
+  if(e.target===header&&document.body.classList.contains('nav-open'))setNavOpen(false);
+});
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape')setNavOpen(false);
+});
+
+/* Sticky header elevation */
+function syncHeader(){
+  header?.classList.toggle('is-scrolled',window.scrollY>12);
+}
+syncHeader();
+window.addEventListener('scroll',syncHeader,{passive:true});
+
+/* Active nav by section */
+const navLinks=[...document.querySelectorAll('.site-nav a[href^="#"]')];
+const watchedSections=navLinks
+  .map(link=>document.querySelector(link.getAttribute('href')))
+  .filter(Boolean);
+function syncActiveNav(){
+  const marker=window.scrollY+window.innerHeight*0.35;
+  let current=null;
+  for(const section of watchedSections){
+    if(section.offsetTop<=marker)current=section;
+  }
+  navLinks.forEach(link=>{
+    const href=link.getAttribute('href');
+    const isHome=href==='#home'||href==='#';
+    link.classList.toggle('is-active',current?href===`#${current.id}`:isHome);
+  });
+}
+syncActiveNav();
+window.addEventListener('scroll',syncActiveNav,{passive:true});
+
+/* Scroll reveals */
+const revealNodes=[...document.querySelectorAll('.reveal')];
+if('IntersectionObserver' in window){
+  const revealObserver=new IntersectionObserver(entries=>{
+    entries.forEach(({target,isIntersecting})=>{
+      if(isIntersecting){
+        target.classList.add('is-in');
+        revealObserver.unobserve(target);
+      }
+    });
+  },{threshold:.16,rootMargin:'0px 0px -8% 0px'});
+  revealNodes.forEach(node=>revealObserver.observe(node));
+}else{
+  revealNodes.forEach(node=>node.classList.add('is-in'));
+}
+if(motionPreference.matches)revealNodes.forEach(node=>node.classList.add('is-in'));
+
+/* Ticker count-up */
+function animateCount(el){
+  const end=Number(el.dataset.count||0);
+  const prefix=el.dataset.prefix||'';
+  const suffix=el.dataset.suffix||'';
+  if(motionPreference.matches){
+    el.textContent=`${prefix}${end}${suffix}`;
+    return;
+  }
+  const duration=1200;
+  const start=performance.now();
+  const tick=now=>{
+    const p=Math.min(1,(now-start)/duration);
+    const eased=1-Math.pow(1-p,3);
+    el.textContent=`${prefix}${Math.round(end*eased)}${suffix}`;
+    if(p<1)requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+const countEls=[...document.querySelectorAll('[data-count]')];
+if('IntersectionObserver' in window&&countEls.length){
+  const countObserver=new IntersectionObserver(entries=>{
+    entries.forEach(({target,isIntersecting})=>{
+      if(!isIntersecting||target.dataset.counted==='true')return;
+      target.dataset.counted='true';
+      animateCount(target);
+      countObserver.unobserve(target);
+    });
+  },{threshold:.5});
+  countEls.forEach(el=>countObserver.observe(el));
+}
+
+/* Illustration motion */
+const illustrations=[...document.querySelectorAll('img:not(.brand-logo)')];
+if('IntersectionObserver' in window){
+  const imageObserver=new IntersectionObserver(entries=>{
+    entries.forEach(({target,isIntersecting})=>{
+      if(isIntersecting){
+        target.classList.add('motion-visible');
+        target.classList.remove('motion-paused');
+      }else if(target.classList.contains('motion-visible')){
+        target.classList.add('motion-paused');
+      }
+    });
+  },{threshold:.15});
+  illustrations.forEach(image=>{
+    image.classList.add('motion-ready');
+    imageObserver.observe(image);
+  });
+  const syncMotion=()=>{
+    illustrations.forEach(image=>{
+      if(motionPreference.matches)image.classList.add('motion-visible');
+    });
+  };
+  motionPreference.addEventListener('change',syncMotion);
+  syncMotion();
+}
+
+/* Hero background video (decorative) */
 const heroSection=document.querySelector('#home.hero');
 const heroVideo=document.querySelector('#hero-video');
 const HERO_DESKTOP_SRC='/videos/hero.mp4';
@@ -87,7 +251,6 @@ const HERO_MOBILE_SRC='/videos/hero-mobile.mp4';
 function heroSrc(){
   return mobileHeroQuery.matches?HERO_MOBILE_SRC:HERO_DESKTOP_SRC;
 }
-
 function armHeroVideo(){
   if(!heroVideo)return;
   heroVideo.muted=true;
@@ -101,7 +264,6 @@ function armHeroVideo(){
   heroVideo.removeAttribute('poster');
   heroVideo.preload='auto';
 }
-
 function applyHeroSource(){
   if(!heroVideo)return false;
   const src=heroSrc();
@@ -113,7 +275,6 @@ function applyHeroSource(){
   heroVideo.load();
   return true;
 }
-
 function setHeroReduced(reduced){
   if(!heroVideo||!heroSection)return;
   heroVideo.dataset.reduced=reduced?'true':'false';
@@ -125,7 +286,6 @@ function setHeroReduced(reduced){
   }
   armHeroVideo();
 }
-
 async function playHeroVideo(){
   if(!heroVideo||!heroSection)return false;
   if(motionPreference.matches||document.visibilityState==='hidden')return false;
@@ -143,19 +303,15 @@ async function playHeroVideo(){
     return false;
   }
 }
-
 function startHeroVideo(){
   if(!heroVideo||!heroSection)return;
   armHeroVideo();
-
   if(motionPreference.matches){
     setHeroReduced(true);
     return;
   }
-
   setHeroReduced(false);
   applyHeroSource();
-
   heroVideo.addEventListener('playing',()=>{
     heroVideo.removeAttribute('poster');
     heroVideo.poster='';
@@ -172,28 +328,23 @@ function startHeroVideo(){
     heroVideo.currentTime=0.001;
     playHeroVideo();
   });
-
   const tryPlay=()=>playHeroVideo().then(ok=>{
     if(ok)return;
-    const resume=()=>{playHeroVideo();};
+    const resume=()=>{playHeroVideo()};
     ['pointerdown','touchstart','keydown'].forEach(type=>{
       window.addEventListener(type,resume,{once:true,passive:true});
     });
   });
-
   if(heroVideo.readyState>=2)tryPlay();
   else{
     heroVideo.addEventListener('loadeddata',tryPlay,{once:true});
     heroVideo.addEventListener('canplay',tryPlay,{once:true});
   }
-  // Kick load/play immediately as well.
   tryPlay();
-
   window.setInterval(()=>{
     if(motionPreference.matches||document.visibilityState==='hidden')return;
     if(heroVideo.paused||heroVideo.currentTime<0.05)playHeroVideo();
-  },1200);
-
+  },1500);
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible')playHeroVideo();
   });
@@ -203,7 +354,6 @@ function startHeroVideo(){
     heroVideo.addEventListener('loadeddata',()=>playHeroVideo(),{once:true});
   });
 }
-
 startHeroVideo();
 motionPreference.addEventListener('change',()=>{
   if(!heroVideo||!heroSection)return;
@@ -215,11 +365,3 @@ motionPreference.addEventListener('change',()=>{
   applyHeroSource();
   playHeroVideo();
 });
-// Animate every illustration as it enters view; pause motion offscreen.
-const illustrations=[...document.querySelectorAll('img:not(.brand-logo)')];
-if('IntersectionObserver' in window){
- const imageObserver=new IntersectionObserver(entries=>{entries.forEach(({target,isIntersecting})=>{if(isIntersecting){target.classList.add('motion-visible');target.classList.remove('motion-paused')}else if(target.classList.contains('motion-visible')){target.classList.add('motion-paused')}})},{threshold:.15});
- illustrations.forEach(image=>{image.classList.add('motion-ready');imageObserver.observe(image)});
- const syncMotion=()=>{illustrations.forEach(image=>{if(motionPreference.matches)image.classList.add('motion-visible')})};
- motionPreference.addEventListener('change',syncMotion);syncMotion();
-}
