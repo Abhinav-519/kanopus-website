@@ -161,12 +161,6 @@ function startHeroVideo(){
     heroVideo.poster='';
     heroSection.dataset.video='playing';
   });
-  // Skip the near-empty opening beat so the first paint already shows motion.
-  heroVideo.addEventListener('loadeddata',()=>{
-    if(heroVideo.currentTime<0.05&&heroVideo.duration>2){
-      try{heroVideo.currentTime=0.35}catch{}
-    }
-  },{once:true});
   heroVideo.addEventListener('timeupdate',()=>{
     if(!heroVideo.duration||heroVideo.paused||motionPreference.matches)return;
     if(heroVideo.currentTime>heroVideo.duration-0.12){
