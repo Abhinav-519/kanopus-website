@@ -75,135 +75,131 @@ document.querySelectorAll('.sectors button').forEach(button=>button.addEventList
   button.classList.add('selected');
 }));
 document.querySelector('#year').textContent=new Date().getFullYear();
-// Full-bleed hero background video (decorative).
+// Full-bleed hero background video (decorative). Never use a poster attribute —
+// browsers keep showing it when autoplay is blocked or delayed.
 const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
 const mobileHeroQuery=window.matchMedia('(max-width: 768px)');
 const heroSection=document.querySelector('#home.hero');
 const heroVideo=document.querySelector('#hero-video');
 const HERO_DESKTOP_SRC='/videos/hero.mp4';
 const HERO_MOBILE_SRC='/videos/hero-mobile.mp4';
-const HERO_POSTER='/videos/hero-poster.jpg';
-let heroUnlocked=false;
 
-function heroSourceForViewport(){
+function heroSrc(){
   return mobileHeroQuery.matches?HERO_MOBILE_SRC:HERO_DESKTOP_SRC;
 }
 
-function applyReducedMotionPoster(){
-  if(!heroVideo||!heroSection)return;
-  heroVideo.dataset.reduced='true';
-  heroSection.dataset.reduced='true';
-  heroVideo.pause();
-  heroVideo.removeAttribute('autoplay');
-  heroVideo.poster=HERO_POSTER;
-}
-
-function clearReducedMotionPoster(){
-  if(!heroVideo||!heroSection)return;
-  heroVideo.dataset.reduced='false';
-  heroSection.dataset.reduced='false';
+function armHeroVideo(){
+  if(!heroVideo)return;
+  heroVideo.muted=true;
+  heroVideo.defaultMuted=true;
+  heroVideo.loop=true;
+  heroVideo.playsInline=true;
+  heroVideo.setAttribute('muted','');
+  heroVideo.setAttribute('playsinline','');
+  heroVideo.setAttribute('webkit-playsinline','');
   heroVideo.setAttribute('autoplay','');
-  heroVideo.poster=HERO_POSTER;
+  heroVideo.removeAttribute('poster');
+  heroVideo.preload='auto';
 }
 
-function bindHeroSrc(src){
+function applyHeroSource(){
   if(!heroVideo)return false;
-  const absolute=new URL(src,window.location.origin).href;
-  if(heroVideo.currentSrc===absolute||heroVideo.getAttribute('src')===src)return false;
-  // Drop <source> children so the explicit src wins in every browser.
-  heroVideo.querySelectorAll('source').forEach(node=>node.remove());
+  const src=heroSrc();
+  if(heroVideo.dataset.activeSrc===src&&heroVideo.getAttribute('src')===src)return false;
+  heroVideo.dataset.activeSrc=src;
+  heroVideo.removeAttribute('poster');
+  while(heroVideo.firstChild)heroVideo.removeChild(heroVideo.firstChild);
   heroVideo.src=src;
   heroVideo.load();
   return true;
 }
 
-async function keepHeroVideoPlaying(){
-  if(!heroVideo||motionPreference.matches||document.visibilityState==='hidden')return false;
+function setHeroReduced(reduced){
+  if(!heroVideo||!heroSection)return;
+  heroVideo.dataset.reduced=reduced?'true':'false';
+  heroSection.dataset.reduced=reduced?'true':'false';
+  if(reduced){
+    heroVideo.pause();
+    heroVideo.removeAttribute('autoplay');
+    return;
+  }
+  armHeroVideo();
+}
+
+async function playHeroVideo(){
+  if(!heroVideo||!heroSection)return false;
+  if(motionPreference.matches||document.visibilityState==='hidden')return false;
   if(heroVideo.dataset.reduced==='true')return false;
-  heroVideo.muted=true;
-  heroVideo.defaultMuted=true;
-  heroVideo.playsInline=true;
+  armHeroVideo();
+  if(!heroVideo.getAttribute('src'))applyHeroSource();
   try{
-    await heroVideo.play();
-    heroUnlocked=true;
-    // Prevent browsers from flashing/sticking on the poster during seamless loops.
-    if(heroVideo.currentTime>0.05)heroVideo.removeAttribute('poster');
-    return true;
+    const playPromise=heroVideo.play();
+    if(playPromise!==undefined)await playPromise;
+    heroVideo.removeAttribute('poster');
+    heroSection.dataset.video=heroVideo.paused?'idle':'playing';
+    return !heroVideo.paused;
   }catch{
-    // Keep the element visible with its poster; retry after it can play / on gesture.
+    heroSection.dataset.video='blocked';
     return false;
   }
 }
 
-function unlockHeroVideoOnGesture(){
-  const resume=()=>{keepHeroVideoPlaying();};
-  ['pointerdown','touchstart','keydown'].forEach(type=>{
-    window.addEventListener(type,resume,{once:true,passive:true});
-  });
-}
-
 function startHeroVideo(){
   if(!heroVideo||!heroSection)return;
-  heroVideo.setAttribute('aria-hidden','true');
-  heroVideo.muted=true;
-  heroVideo.defaultMuted=true;
-  heroVideo.loop=true;
-  heroVideo.playsInline=true;
-  heroVideo.setAttribute('playsinline','');
-  heroVideo.setAttribute('webkit-playsinline','');
-  heroVideo.preload='auto';
-  heroVideo.poster=HERO_POSTER;
+  armHeroVideo();
 
   if(motionPreference.matches){
-    applyReducedMotionPoster();
+    setHeroReduced(true);
     return;
   }
 
-  clearReducedMotionPoster();
-  bindHeroSrc(heroSourceForViewport());
+  setHeroReduced(false);
+  applyHeroSource();
 
-  // Seamless loop fallback — avoid a visible hitch at the clip end.
+  heroVideo.addEventListener('playing',()=>{
+    heroVideo.removeAttribute('poster');
+    heroSection.dataset.video='playing';
+  });
   heroVideo.addEventListener('timeupdate',()=>{
-    if(!heroVideo.duration||motionPreference.matches||heroVideo.paused)return;
-    if(heroVideo.currentTime>heroVideo.duration-0.1){
-      heroVideo.currentTime=0;
-      keepHeroVideoPlaying();
+    if(!heroVideo.duration||heroVideo.paused||motionPreference.matches)return;
+    if(heroVideo.currentTime>heroVideo.duration-0.12){
+      heroVideo.currentTime=0.001;
+      playHeroVideo();
     }
   });
   heroVideo.addEventListener('ended',()=>{
-    heroVideo.currentTime=0;
-    keepHeroVideoPlaying();
+    heroVideo.currentTime=0.001;
+    playHeroVideo();
   });
 
-  const tryPlayWhenReady=()=>{keepHeroVideoPlaying().then(ok=>{if(!ok)unlockHeroVideoOnGesture();});};
-  if(heroVideo.readyState>=3)tryPlayWhenReady();
-  else{
-    heroVideo.addEventListener('canplay',tryPlayWhenReady,{once:true});
-    heroVideo.addEventListener('loadeddata',tryPlayWhenReady,{once:true});
-  }
+  const tryPlay=()=>playHeroVideo().then(ok=>{
+    if(ok)return;
+    const resume=()=>{playHeroVideo();};
+    ['pointerdown','touchstart','keydown'].forEach(type=>{
+      window.addEventListener(type,resume,{once:true,passive:true});
+    });
+  });
 
-  // Watchdog: if the clip stalls on the poster/first frame, keep forcing play.
+  if(heroVideo.readyState>=2)tryPlay();
+  else{
+    heroVideo.addEventListener('loadeddata',tryPlay,{once:true});
+    heroVideo.addEventListener('canplay',tryPlay,{once:true});
+  }
+  // Kick load/play immediately as well.
+  tryPlay();
+
   window.setInterval(()=>{
     if(motionPreference.matches||document.visibilityState==='hidden')return;
-    if(!heroVideo||heroVideo.dataset.reduced==='true')return;
-    if(heroVideo.paused||heroVideo.currentTime<0.05)keepHeroVideoPlaying();
+    if(heroVideo.paused||heroVideo.currentTime<0.05)playHeroVideo();
   },1200);
 
   document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible')keepHeroVideoPlaying();
+    if(document.visibilityState==='visible')playHeroVideo();
   });
-  window.addEventListener('pageshow',()=>keepHeroVideoPlaying());
   mobileHeroQuery.addEventListener('change',()=>{
     if(motionPreference.matches)return;
-    const next=heroSourceForViewport();
-    const t=heroVideo.currentTime;
-    if(bindHeroSrc(next)){
-      heroVideo.poster=HERO_POSTER;
-      heroVideo.addEventListener('loadeddata',()=>{
-        try{if(Number.isFinite(t))heroVideo.currentTime=t;}catch{}
-        keepHeroVideoPlaying();
-      },{once:true});
-    }
+    applyHeroSource();
+    heroVideo.addEventListener('loadeddata',()=>playHeroVideo(),{once:true});
   });
 }
 
@@ -211,12 +207,12 @@ startHeroVideo();
 motionPreference.addEventListener('change',()=>{
   if(!heroVideo||!heroSection)return;
   if(motionPreference.matches){
-    applyReducedMotionPoster();
+    setHeroReduced(true);
     return;
   }
-  clearReducedMotionPoster();
-  bindHeroSrc(heroSourceForViewport());
-  keepHeroVideoPlaying().then(ok=>{if(!ok)unlockHeroVideoOnGesture();});
+  setHeroReduced(false);
+  applyHeroSource();
+  playHeroVideo();
 });
 // Animate every illustration as it enters view; pause motion offscreen.
 const illustrations=[...document.querySelectorAll('img:not(.brand-logo)')];
