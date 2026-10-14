@@ -126,6 +126,8 @@ async function keepHeroVideoPlaying(){
   try{
     await heroVideo.play();
     heroUnlocked=true;
+    // Prevent browsers from flashing/sticking on the poster during seamless loops.
+    if(heroVideo.currentTime>0.05)heroVideo.removeAttribute('poster');
     return true;
   }catch{
     // Keep the element visible with its poster; retry after it can play / on gesture.
@@ -175,8 +177,17 @@ function startHeroVideo(){
 
   const tryPlayWhenReady=()=>{keepHeroVideoPlaying().then(ok=>{if(!ok)unlockHeroVideoOnGesture();});};
   if(heroVideo.readyState>=3)tryPlayWhenReady();
-  else heroVideo.addEventListener('canplay',tryPlayWhenReady,{once:true});
-  heroVideo.addEventListener('loadeddata',tryPlayWhenReady,{once:true});
+  else{
+    heroVideo.addEventListener('canplay',tryPlayWhenReady,{once:true});
+    heroVideo.addEventListener('loadeddata',tryPlayWhenReady,{once:true});
+  }
+
+  // Watchdog: if the clip stalls on the poster/first frame, keep forcing play.
+  window.setInterval(()=>{
+    if(motionPreference.matches||document.visibilityState==='hidden')return;
+    if(!heroVideo||heroVideo.dataset.reduced==='true')return;
+    if(heroVideo.paused||heroVideo.currentTime<0.05)keepHeroVideoPlaying();
+  },1200);
 
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible')keepHeroVideoPlaying();
@@ -187,6 +198,7 @@ function startHeroVideo(){
     const next=heroSourceForViewport();
     const t=heroVideo.currentTime;
     if(bindHeroSrc(next)){
+      heroVideo.poster=HERO_POSTER;
       heroVideo.addEventListener('loadeddata',()=>{
         try{if(Number.isFinite(t))heroVideo.currentTime=t;}catch{}
         keepHeroVideoPlaying();
