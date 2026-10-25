@@ -113,10 +113,34 @@ document.querySelector('#reset').addEventListener('click',()=>{
   document.querySelector('#success').hidden=true;
   showDetailsError('');
 });
+const sectorData = {
+  retail: { roi: 240, suffix: '%', spend: 500, prefix: '$', spendSuffix: 'M+' },
+  tech: { roi: 380, suffix: '%', spend: 850, prefix: '$', spendSuffix: 'M+' },
+  finance: { roi: 195, suffix: '%', spend: 1.4, prefix: '$', spendSuffix: 'B+' }
+};
 document.querySelectorAll('.sectors button').forEach(button=>{
   button.addEventListener('click',()=>{
     document.querySelectorAll('.sectors button').forEach(b=>b.classList.remove('selected'));
     button.classList.add('selected');
+    const key=button.dataset.sector||'retail';
+    const data=sectorData[key];
+    if(data){
+      const roiEl=document.querySelector('.ticker strong[data-suffix="%"]');
+      const spendEl=document.querySelector('.ticker strong[data-prefix="$"]');
+      if(roiEl){
+        roiEl.dataset.count=data.roi;
+        roiEl.dataset.suffix=data.suffix;
+        roiEl.dataset.counted='false';
+        animateCount(roiEl);
+      }
+      if(spendEl){
+        spendEl.dataset.count=data.spend;
+        spendEl.dataset.prefix=data.prefix;
+        spendEl.dataset.suffix=data.spendSuffix;
+        spendEl.dataset.counted='false';
+        animateCount(spendEl);
+      }
+    }
   });
 });
 document.querySelector('#year').textContent=new Date().getFullYear();
@@ -245,8 +269,8 @@ if('IntersectionObserver' in window){
 /* Hero background video (decorative) */
 const heroSection=document.querySelector('#home.hero');
 const heroVideo=document.querySelector('#hero-video');
-const HERO_DESKTOP_SRC='/videos/hero.mp4';
-const HERO_MOBILE_SRC='/videos/hero-mobile.mp4';
+const HERO_DESKTOP_SRC='/videos/Animated_Earth_connecting_to_brain_20261014092310.mp4';
+const HERO_MOBILE_SRC='/videos/Animated_Earth_connecting_to_brain_20261014092310.mp4';
 
 function heroSrc(){
   return mobileHeroQuery.matches?HERO_MOBILE_SRC:HERO_DESKTOP_SRC;
@@ -386,6 +410,8 @@ function bindTilt(el,max=10){
     el.style.setProperty('--tilt-y',`${(px*max).toFixed(2)}deg`);
     el.style.setProperty('--tilt-lift','-6px');
     el.style.setProperty('--tilt-z','18px');
+    el.style.setProperty('--mouse-x',`${(e.clientX-rect.left).toFixed(1)}px`);
+    el.style.setProperty('--mouse-y',`${(e.clientY-rect.top).toFixed(1)}px`);
   });
   el.addEventListener('pointerleave',()=>resetTilt(el));
 }
@@ -516,16 +542,21 @@ motionPreference.addEventListener('change',()=>{
   }
 });
 
-/* Global VFX: particle field + cursor spotlight */
+/* Global VFX: Synaptic neural field + cursor spotlight */
 const particleCanvas=document.querySelector('#vfx-particles');
 const spot=document.querySelector('#vfx-spot');
+const cursorGlow=document.querySelector('#cursor-glow');
+const scrollProgress=document.querySelector('#scroll-progress');
 let particleRaf=0;
 let particleCtx=null;
 let particles=[];
+let neuralPulses=[];
 let spotX=window.innerWidth*0.5;
 let spotY=window.innerHeight*0.4;
 let spotTX=spotX;
 let spotTY=spotY;
+let cursorX=spotX;
+let cursorY=spotY;
 
 function resizeParticles(){
   if(!particleCanvas)return;
@@ -536,14 +567,15 @@ function resizeParticles(){
   particleCanvas.style.height=`${window.innerHeight}px`;
   particleCtx=particleCanvas.getContext('2d');
   particleCtx.setTransform(dpr,0,0,dpr,0,0);
-  const count=window.innerWidth<760?28:48;
-  particles=Array.from({length:count},()=>({
+  const count=window.innerWidth<760?32:58;
+  particles=Array.from({length:count},(_,i)=>({
     x:Math.random()*window.innerWidth,
     y:Math.random()*window.innerHeight,
-    r:Math.random()*1.8+0.4,
-    vx:(Math.random()-0.5)*0.35,
-    vy:(Math.random()-0.5)*0.28,
-    a:Math.random()*0.45+0.15
+    r:Math.random()*2+0.6,
+    vx:(Math.random()-0.5)*0.38,
+    vy:(Math.random()-0.5)*0.32,
+    a:Math.random()*0.55+0.2,
+    type:i%4===0?'cyan':'gold'
   }));
 }
 
@@ -552,19 +584,38 @@ function drawParticles(){
   const w=window.innerWidth;
   const h=window.innerHeight;
   particleCtx.clearRect(0,0,w,h);
+
   for(const p of particles){
+    const toCursor=Math.hypot(p.x-spotX,p.y-spotY);
+    if(toCursor<180&&toCursor>10){
+      const force=(1-toCursor/180)*0.08;
+      p.vx+=((spotX-p.x)/toCursor)*force;
+      p.vy+=((spotY-p.y)/toCursor)*force;
+      p.vx*=0.98;
+      p.vy*=0.98;
+    }
     p.x+=p.vx;
     p.y+=p.vy;
     if(p.x<-20)p.x=w+20;
     if(p.x>w+20)p.x=-20;
     if(p.y<-20)p.y=h+20;
     if(p.y>h+20)p.y=-20;
+
     particleCtx.beginPath();
-    particleCtx.fillStyle=`rgba(200,150,78,${p.a})`;
+    if(p.type==='cyan'){
+      particleCtx.fillStyle=`rgba(78, 243, 210, ${p.a*0.9})`;
+      particleCtx.shadowColor='rgba(78, 243, 210, 0.4)';
+    }else{
+      particleCtx.fillStyle=`rgba(200, 150, 78, ${p.a})`;
+      particleCtx.shadowColor='rgba(200, 150, 78, 0.3)';
+    }
+    particleCtx.shadowBlur=4;
     particleCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
     particleCtx.fill();
+    particleCtx.shadowBlur=0;
   }
-  // constellation links near cursor
+
+  const activeLinks=[];
   for(let i=0;i<particles.length;i++){
     for(let j=i+1;j<particles.length;j++){
       const a=particles[i];
@@ -572,25 +623,69 @@ function drawParticles(){
       const dx=a.x-b.x;
       const dy=a.y-b.y;
       const dist=Math.hypot(dx,dy);
-      if(dist>120)continue;
+      if(dist>130)continue;
       const midX=(a.x+b.x)/2;
       const midY=(a.y+b.y)/2;
       const toSpot=Math.hypot(midX-spotX,midY-spotY);
-      if(toSpot>220)continue;
-      particleCtx.strokeStyle=`rgba(244,241,231,${(1-dist/120)*0.18})`;
-      particleCtx.lineWidth=1;
+      const isNearCursor=toSpot<240;
+      const alpha=isNearCursor?(1-dist/130)*0.28:(1-dist/130)*0.12;
+
+      particleCtx.strokeStyle=a.type==='cyan'||b.type==='cyan'
+        ?`rgba(78, 243, 210, ${alpha})`
+        :`rgba(224, 179, 106, ${alpha})`;
+      particleCtx.lineWidth=isNearCursor?1.2:0.8;
       particleCtx.beginPath();
       particleCtx.moveTo(a.x,a.y);
       particleCtx.lineTo(b.x,b.y);
       particleCtx.stroke();
+
+      if(dist<100&&(isNearCursor||Math.random()<0.003)){
+        activeLinks.push({a,b,dist});
+      }
     }
   }
+
+  if(neuralPulses.length<8&&activeLinks.length&&Math.random()<0.15){
+    const link=activeLinks[Math.floor(Math.random()*activeLinks.length)];
+    neuralPulses.push({
+      a:link.a,
+      b:link.b,
+      progress:0,
+      speed:0.02+Math.random()*0.03,
+      color:Math.random()>0.4?'rgba(78, 243, 210, 0.9)':'rgba(255, 230, 160, 0.9)'
+    });
+  }
+
+  for(let k=neuralPulses.length-1;k>=0;k--){
+    const pulse=neuralPulses[k];
+    pulse.progress+=pulse.speed;
+    if(pulse.progress>=1){
+      neuralPulses.splice(k,1);
+      continue;
+    }
+    const px=pulse.a.x+(pulse.b.x-pulse.a.x)*pulse.progress;
+    const py=pulse.a.y+(pulse.b.y-pulse.a.y)*pulse.progress;
+    particleCtx.beginPath();
+    particleCtx.fillStyle=pulse.color;
+    particleCtx.shadowColor=pulse.color;
+    particleCtx.shadowBlur=6;
+    particleCtx.arc(px,py,2.2,0,Math.PI*2);
+    particleCtx.fill();
+    particleCtx.shadowBlur=0;
+  }
+
   spotX+=(spotTX-spotX)*0.1;
   spotY+=(spotTY-spotY)*0.1;
   if(spot){
     spot.style.left=`${spotX}px`;
     spot.style.top=`${spotY}px`;
   }
+  if(cursorGlow&&finePointer.matches){
+    cursorX+=(spotTX-cursorX)*0.18;
+    cursorY+=(spotTY-cursorY)*0.18;
+    cursorGlow.style.transform=`translate3d(${cursorX}px, ${cursorY}px, 0)`;
+  }
+
   particleRaf=requestAnimationFrame(drawParticles);
 }
 
@@ -606,6 +701,7 @@ function startVfx(){
   },{passive:true});
   drawParticles();
 }
+
 function stopVfx(){
   cancelAnimationFrame(particleRaf);
   particleRaf=0;
@@ -613,3 +709,30 @@ function stopVfx(){
   if(particleCtx)particleCtx.clearRect(0,0,window.innerWidth,window.innerHeight);
 }
 startVfx();
+
+/* Scroll Progress Bar */
+function updateScrollProgress(){
+  if(!scrollProgress)return;
+  const max=document.documentElement.scrollHeight-window.innerHeight;
+  const progress=max>0?Math.min(1,Math.max(0,window.scrollY/max)):0;
+  scrollProgress.style.transform=`scaleX(${progress})`;
+}
+window.addEventListener('scroll',updateScrollProgress,{passive:true});
+updateScrollProgress();
+
+/* Cursor Glow Hover Expansion */
+if(cursorGlow&&finePointer.matches){
+  const interactiveTargets='a, button, input, select, textarea, .service-card, .tilt-3d, [data-media], [data-logo]';
+  document.addEventListener('mouseover',e=>{
+    if(e.target.closest(interactiveTargets)){
+      cursorGlow.classList.add('is-hovering');
+    }
+  });
+  document.addEventListener('mouseout',e=>{
+    if(e.target.closest(interactiveTargets)){
+      cursorGlow.classList.remove('is-hovering');
+    }
+  });
+}
+
+

@@ -23,8 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
-# Uploads (source zip; site files live at repo root)
-uploads
+# Local dev server symlinks
+/assets
+/videos
+
 
 .vercel
 dist
